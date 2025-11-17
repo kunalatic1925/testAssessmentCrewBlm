@@ -101,8 +101,29 @@ export class VideoPage {
   }
 
   async play(): Promise<void> {
-    await this.page.keyboard.press('k');
-    await delay(800);
+    // Ensure the player has focus and we interact with it
+    try {
+      await this.page.click('video', { delay: 50 }).catch(() => {});
+    } catch {}
+  
+    // Keyboard toggle (YouTube shortcut)
+    await this.page.keyboard.press('k').catch(() => {});
+    await delay(1000);
+  
+    // Fallback: direct JS play() on the <video> element
+    try {
+      await this.page.evaluate(() => {
+        const v = document.querySelector('video') as HTMLVideoElement | null;
+        if (v && v.paused) {
+          const p = v.play();
+          if (p && typeof p.then === 'function') {
+            p.catch(() => { /* ignore autoplay errors */ });
+          }
+        }
+      });
+    } catch {}
+  
+    await delay(500);
   }
 
   async seekForward(seconds = 10): Promise<void> {

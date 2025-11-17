@@ -28,7 +28,12 @@ BeforeAll(async function () {
   globalThis.__BROWSER__ = await puppeteer.launch({
     headless: isHeadless,                        // 👈 controlled by env
     slowMo: isHeadless ? 0 : 100,                // 👈 slowMo only when visible (local)
-    args: ['--no-sandbox', '--disable-setuid-sandbox'] // 👈 required in CI
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--autoplay-policy=no-user-gesture-required', // 👈 allow autoplay in CI
+      '--mute-audio' 
+    ]  
   });
 });
 

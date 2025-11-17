@@ -5,11 +5,17 @@ import { delay } from './delay.js';
 export async function ensurePlaying(page: Page): Promise<void> {
   const video = new VideoPage(page);
   await video.ensurePlayerReady();
-  if (!(await video.isPlaying())) {
+
+  // Try up to 5 times over ~6–7 seconds
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (await video.isPlaying()) {
+      return;
+    }
     await video.play();
-    await delay(300);
+    await delay(1200);
   }
 }
+
 
 export async function ensurePaused(page: Page): Promise<void> {
   const video = new VideoPage(page);

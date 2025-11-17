@@ -44,7 +44,9 @@ When('I open the first video result', async function (this: any) {
 
 Then('the video should start playing', async function (this: any) {
   await ensurePlaying(globalThis.__PAGE__!);
-  assert.equal(await video.isPlaying(), true, 'Expected video to be playing');
+  const playing = await video.isPlaying();
+  this.attach(`Playing status in CI: ${playing}`);
+  assert.equal(playing, true, 'Expected video to be playing');
 });
 
 When('I pause the video', async function (this: any) {
