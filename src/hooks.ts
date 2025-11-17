@@ -7,6 +7,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 setDefaultTimeout(60_000);
 
+const headlessEnv = (process.env.HEADLESS ?? 'false').toLowerCase();
+const isHeadless = headlessEnv === 'true';
+
 declare global {
   var __BROWSER__: Browser | undefined;
   var __PAGE__: Page | undefined;
@@ -21,8 +24,8 @@ BeforeAll(async function () {
   await ensureDir('reports');
   await ensureDir('screenshots');
   globalThis.__BROWSER__ = await puppeteer.launch({
-    headless: false,
-    slowMo: 100,
+    headless: isHeadless,                        // 👈 controlled by env
+    slowMo: isHeadless ? 0 : 100, 
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
 });

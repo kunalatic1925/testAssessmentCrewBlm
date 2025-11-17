@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "pretest": "rimraf dist reports screenshots && tsc && node -e \"require('fs').mkdirSync('reports',{recursive:true});require('fs').mkdirSync('screenshots',{recursive:true});\"",
-    "test": "cucumber-js --config cucumber.mjs --import dist/hooks.js --import 'dist/steps/**/*.js' --format json:reports/report.json --format html:reports/report.html || true",
+    "pretest": "rimraf dist && tsc",
+  "test": "npm run pretest && cucumber-js --config cucumber.mjs --import dist/hooks.js --import 'dist/steps/**/*.js'",
     "posttest": "node scripts/generate-report.mjs && node -e \"require('child_process').exec(process.platform==='win32'?'start '+require('path').resolve('reports/history/index.html'):process.platform==='darwin'?'open '+require('path').resolve('reports/history/index.html'):'xdg-open '+require('path').resolve('reports/history/index.html'))\"",
     "report:enhanced": "node scripts/generate-report.mjs",
     "report:open": "node -e \"require('child_process').exec(process.platform==='win32'?'start '+require('path').resolve('reports/history/index.html'):process.platform==='darwin'?'open '+require('path').resolve('reports/history/index.html'):'xdg-open '+require('path').resolve('reports/history/index.html'))\""
