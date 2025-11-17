@@ -5,10 +5,11 @@ import * as path from 'node:path';
 import dotenv from 'dotenv';
 
 dotenv.config();
-setDefaultTimeout(60_000);
 
 const headlessEnv = (process.env.HEADLESS ?? 'false').toLowerCase();
 const isHeadless = headlessEnv === 'true';
+
+setDefaultTimeout(60_000);
 
 declare global {
   var __BROWSER__: Browser | undefined;
@@ -23,10 +24,11 @@ const ensureDir = async (dir: string) => {
 BeforeAll(async function () {
   await ensureDir('reports');
   await ensureDir('screenshots');
+
   globalThis.__BROWSER__ = await puppeteer.launch({
     headless: isHeadless,                        // 👈 controlled by env
-    slowMo: isHeadless ? 0 : 100, 
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    slowMo: isHeadless ? 0 : 100,                // 👈 slowMo only when visible (local)
+    args: ['--no-sandbox', '--disable-setuid-sandbox'] // 👈 required in CI
   });
 });
 
@@ -44,11 +46,13 @@ Before(async function () {
 
 After(async function (this: any, { pickle, result }: ITestCaseHookParameter) {
   const name = pickle?.name?.replace(/\W+/g, '_') ?? 'scenario';
+
   if (result?.status === 'FAILED' && globalThis.__PAGE__) {
-    await ensureDir('screenshots');  
+    await ensureDir('screenshots');
     const failureShot = path.join('screenshots', `${name}-FAILED.png`);
     await globalThis.__PAGE__!.screenshot({ path: failureShot as `${string}.png` });
     this.attach(`Saved failure screenshot to ${failureShot}`);
   }
+
   await globalThis.__PAGE__?.close();
 });
