@@ -38,15 +38,24 @@ When('I open the first video result', async function (this: any) {
   await home.openFirstResult();
   video = new VideoPage(globalThis.__PAGE__!);
   await video.ensurePlayerReady();
-  await video.waitThenSkipAd(12_000, 250, 12_000, 5_000);
+
+  // If you have ad handling (waitThenSkipAd / ensureNoAd), keep that here
+  if ((video as any).waitThenSkipAd) {
+    await (video as any).waitThenSkipAd(12_000, 250, 12_000, 5_000);
+  }
+
+  // 🔹 Go fullscreen and ensure playback once we are on the watch page
+  await video.ensureFullscreenAndPlaying();
   
 });
 
 Then('the video should start playing', async function (this: any) {
+  // Extra safety: try to ensure playing again
   await ensurePlaying(globalThis.__PAGE__!);
+
   const playing = await video.isPlaying();
   this.attach(`Playing status in CI: ${playing}`);
-  assert.equal(playing, true, 'Expected video to be playing');
+  assert.ok(playing, 'Expected video to be playing');
 });
 
 When('I pause the video', async function (this: any) {
