@@ -5,28 +5,29 @@ import { delay } from './delay.js';
 export async function ensurePlaying(page: Page): Promise<void> {
   const video = new VideoPage(page);
   await video.ensurePlayerReady();
+  await delay(2000); // buffer
 
-  // Try up to 5 times over ~6–7 seconds
-  for (let attempt = 0; attempt < 5; attempt++) {
+  for (let attempt = 0; attempt < 6; attempt++) {
     if (await video.isPlaying()) {
       return;
     }
     await video.play();
-    await delay(1200);
+    await delay(1500);
   }
 }
-
 
 export async function ensurePaused(page: Page): Promise<void> {
   const video = new VideoPage(page);
   await video.ensurePlayerReady();
-  if (await video.isPlaying()) {
+
+  // Try up to 5 times to get to a paused state
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (await video.isPaused()) {
+      return;
+    }
+
     await video.pause();
-    await delay(300);
-  } else {
-    await video.play();
-    await delay(500);
-    await video.pause();
-    await delay(300);
+    await delay(800);
   }
 }
+

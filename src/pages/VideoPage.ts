@@ -92,19 +92,49 @@ export class VideoPage {
     return await this.page.evaluate(() => {
       const v = document.querySelector('video') as HTMLVideoElement | null;
       if (!v) return false;
-
+  
+      // Strict definition: actually playing
       const hasReadyData = v.readyState >= 2; // HAVE_CURRENT_DATA
-      const notPaused = !v.paused && !v.ended;
+      const notPaused = !v.paused;
+      const notEnded = !v.ended;
       const progressed = v.currentTime > 0.5;
+  
+      return hasReadyData && notPaused && notEnded && progressed;
+    });
+  }
 
-      // In headless, we consider "ready + currentTime > 0.5" as playing enough
-      return (notPaused && hasReadyData) || progressed;
+  async isPaused(): Promise<boolean> {
+    return await this.page.evaluate(() => {
+      const v = document.querySelector('video') as HTMLVideoElement | null;
+      if (!v) return false;
+  
+      // Consider paused if the video element reports paused or ended
+      return v.paused === true || v.ended === true;
     });
   }
 
   async pause(): Promise<void> {
-    await this.page.keyboard.press('k');
+    // Try the YouTube keyboard shortcut "k" to toggle pause
+    try {
+      await this.page.keyboard.press('k');
+    } catch {
+      // ignore
+    }
     await delay(800);
+  
+    // Extra safety: directly call pause() on the <video> element
+    try {
+      await this.page.evaluate(() => {
+        const v = document.querySelector('video') as HTMLVideoElement | null;
+        if (v && !v.paused) {
+          v.pause();
+        }
+      });
+    } catch {
+      // ignore
+    }
+  
+    await delay(400); // give time for state to settle
   }
 
   async play(): Promise<void> {
@@ -153,26 +183,8 @@ export class VideoPage {
     return this.page.title();
   }
 
-  async enterFullscreen(maxRetries = 5): Promise<void> {
-    for (let i = 0; i < maxRetries; i++) {
-      // 'f' is YouTube fullscreen shortcut
-      await this.page.keyboard.press('f').catch(() => {});
-      await delay(700);
-
-      const isFs = await this.page.evaluate(() => {
-        const player = document.querySelector('.html5-video-player') as HTMLElement | null;
-        return !!player && player.classList.contains('ytp-fullscreen');
-      });
-
-      if (isFs) {
-        return;
-      }
-    }
-  }
-
   async ensureFullscreenAndPlaying(): Promise<void> {
     await this.ensurePlayerReady();
-    await this.enterFullscreen();
     // Try a couple of times to be safe
     for (let i = 0; i < 5; i++) {
       if (await this.isPlaying()) return;

@@ -18,6 +18,10 @@ let video: VideoPage;
 
 Given('I open the video site', async function (this: any) {
   const page = globalThis.__PAGE__!;
+  // await page.setViewport({ width: 1920, height: 1080 });
+  try {
+    await page.keyboard.press('F11');
+  } catch {}
   home = new HomePage(page, BASE_URL);
   await home.open();
   this.attach(`Opened: ${BASE_URL}`);
@@ -63,7 +67,16 @@ When('I pause the video', async function (this: any) {
 });
 
 Then('the video should be paused', async function (this: any) {
-  assert.equal(await video.isPlaying(), false, 'Expected video to be paused');
+  await ensurePaused(globalThis.__PAGE__!);
+
+  const paused = await video.isPaused();
+  const stillPlaying = await video.isPlaying(); // extra debug info
+
+  this.attach(
+    `Paused check - isPaused: ${paused}, isPlaying: ${stillPlaying}`
+  );
+
+  assert.equal(paused, true, 'Expected video to be paused');
 });
 
 When('I seek forward in the video', async function (this: any) {
